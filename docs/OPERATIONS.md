@@ -102,3 +102,46 @@ python scripts/bootstrap.py pc
 - **OpenCode 免费池 429** → 上游免费额度用尽，与本仓库无关。
 - **DSH 冷启动 40-220 秒** → Bun 拉模型列表 + NIM 探测；supervisor 等待上限 300 秒 + 进程存活守卫。
 - **编排器无速率限制** → 有 token 鉴权，但没有请求频率限制。对公网暴露前建议加 nginx limit_req 或在编排器里加计数。
+
+## ⚠️ 手工启动 DSH 一定会打断反代链路
+
+**2026-11-09 实际事故**：宿主机重启后有人手工跑了
+`node .../dsh/lib/bin.js web`，**漏掉 `--host` 参数** → DSH 绑到 `127.0.0.1:3080`
+→ Caddy 反代目标 `100.117.110.112:3080` 不存在 → **Caddy :3081/:8327 连不上**
+→ **VPS 公网入口 8444 返回 502**。
+
+**正确做法**：**永远不要手工起 DSH**。要重启就跑：
+
+```powershell
+# 停掉手工起的实例, 让 supervisor 用正确参数接管
+Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" |
+  Where-Object { $_.CommandLine -match "dsh-supervisor" } |
+  ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
+Start-Sleep -Seconds 3
+schtasks /Run /TN "DSH-Supervisor"
+```
+
+supervisor 的启动参数（含 `--host` / `--port` / `--trusted-host`）在
+`pc/dsh/dsh-supervisor.ps1` 的 `$HOST_IP` / `$PORT` 那几行，不要手抄。
+
+**自查绑定是否正确**：
+
+```powershell
+Get-NetTCPConnection -LocalPort 3080 -State Listen |
+  Select-Object LocalAddress, OwningProcess
+# 必须是 100.117.110.112, 不是 127.0.0.1
+```
+
+## Caddy 已纳入 supervisor 守护
+
+2026-11-09 之前 supervisor 只**写** Caddyfile 并 `caddy reload`，
+**从不启动 Caddy 进程** —— Caddy 一挂就没人拉起，公网入口跟着 502。
+
+现在 supervisor 每轮检查 `:3081` 是否监听，掉了就拉起。实测：
+
+```plain
+[07:12:14] Caddy down on 3081 - starting
+[07:12:19] Caddy ready on 3081 pid 8096
+```
+
+**崩溃 → 6 秒自动恢复**，VPS 公网入口全程 200。

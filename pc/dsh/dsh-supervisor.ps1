@@ -1,4 +1,4 @@
-# DSH 一体化启动器 (Windows PowerShell 5.1)
+﻿# DSH 一体化启动器 (Windows PowerShell 5.1)
 # 1. 拉起 dsh web (绑 Tailscale IP)  2. 抓 launch token  3. 同步 Caddy 短链  4. 守护重启
 
 # ── 加载本地密钥 (不入库) ──────────────────────────────────
@@ -21,6 +21,7 @@ $TOKEN_FILE = "D:\000\dsh\dsh-token.txt"
 $WEB_LOG    = "D:\000\dsh\dsh-web.log"
 $WEB_ERR    = "D:\000\dsh\dsh-web.err"
 $HOST_IP    = "100.117.110.112"
+$LAN_IP     = "192.168.0.111"
 $PORT       = 3080
 $CDY_PORT   = 3081
 $GW_KEY     = $env:DSH_GATEWAY_KEY
@@ -55,7 +56,8 @@ function Write-Caddyfile($token) {
   $L.Add('    }')
   $L.Add('}')
   $L.Add('')
-  $L.Add(':' + $CDY_PORT + ' {')
+  # Tailscale 入口: 必须绑定具体 IP, 不能用裸 ':3081' (会与局域网站点抢地址)
+  $L.Add('http://' + $HOST_IP + ':' + $CDY_PORT + ' {')
   $L.Add('    @d path /d /d/*')
   $L.Add('    handle @d {')
   $L.Add('        rewrite * /?token=' + $token)
@@ -71,12 +73,32 @@ function Write-Caddyfile($token) {
   $L.Add('}')
   $text = ($L -join "`r`n") + "`r`n"
   [System.IO.File]::WriteAllText($CADDY_CF, $text, (New-Object System.Text.ASCIIEncoding))
+
+  # NOTE: the LAN-only entry (192.168.0.111:3081) is intentionally NOT generated.
+  # DSH issues dsh-auth-* cookies bound to the request authority, so a client that
+  # reaches the app via a different host than the one in the cookie gets rejected.
+  # One authority = one entry. Keep the Tailscale host as the single phone entry.
 }
 
 function Sync-Caddy($token) {
   if ([string]::IsNullOrWhiteSpace($token)) { return }
   Write-Caddyfile $token
-  & $CADDY reload --config $CADDY_CF --adapter caddyfile 2>&1 | Out-Null
+  # Caddy 必须在跑才能 reload; 没有实例时 reload 会静默失败,
+  # 导致 :3081/:8327 端口无人监听 -> VPS 公网 502。
+  $caddyProc = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
+      Where-Object { $_.Name -like "*caddy*" -and $_.CommandLine -like "*$CADDY_CF*" } |
+      Select-Object -First 1
+  if (-not $caddyProc) {
+    Log "Caddy not running - starting"
+    $cp = Start-Process -FilePath $CADDY -ArgumentList @("run","--config",$CADDY_CF,"--adapter","caddyfile") `
+          -WorkingDirectory (Split-Path $CADDY_CF) `
+          -RedirectStandardOutput "D:\000\dsh\caddy.log" -RedirectStandardError "D:\000\dsh\caddy.err" `
+          -PassThru -WindowStyle Hidden
+    Start-Sleep -Seconds 5
+    Log ("Caddy started pid " + $cp.Id)
+  } else {
+    & $CADDY reload --config $CADDY_CF --adapter caddyfile 2>&1 | Out-Null
+  }
   Set-Content -Path $TOKEN_FILE -Value $token -NoNewline
   Log ("Caddy synced, token=" + $token.Substring(0, [Math]::Min(10, $token.Length)))
 }
@@ -126,7 +148,7 @@ while ($true) {
       Log "DSH down on $PORT - launching"
       Remove-Item $WEB_LOG, $WEB_ERR -ErrorAction SilentlyContinue
       $proc = Start-Process -FilePath $DSH_CLI `
-            -ArgumentList @("web","--no-open","--host",$HOST_IP,"--port",$PORT,"--trusted-host","23.95.35.82") `
+            -ArgumentList @("web","--no-open","--host",$HOST_IP,"--port",$PORT,"--trusted-host","23.95.35.82","--trusted-host",$LAN_IP,"--trusted-host",($LAN_IP + ":3081")) `
             -WorkingDirectory "C:\Users\chan\.dsh" `
             -RedirectStandardOutput $WEB_LOG -RedirectStandardError $WEB_ERR `
             -PassThru -WindowStyle Hidden
@@ -151,8 +173,22 @@ while ($true) {
       Sync-VPS $tok
       $lastToken = $tok
     }
+
+    # Caddy 存活检查: 进程在但端口没监听 (配置错误/启动失败) 也要拉起
+    $cdyConn = Get-NetTCPConnection -LocalPort $CDY_PORT -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $cdyConn) {
+      Log "Caddy down on $CDY_PORT - starting"
+      $cp2 = Start-Process -FilePath $CADDY -ArgumentList @("run","--config",$CADDY_CF,"--adapter","caddyfile") `
+            -WorkingDirectory (Split-Path $CADDY_CF) `
+            -RedirectStandardOutput "D:\000\dsh\caddy.log" -RedirectStandardError "D:\000\dsh\caddy.err" `
+            -PassThru -WindowStyle Hidden
+      Start-Sleep -Seconds 5
+      $cdyConn2 = Get-NetTCPConnection -LocalPort $CDY_PORT -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+      if ($cdyConn2) { Log ("Caddy ready on " + $CDY_PORT + " pid " + $cp2.Id) }
+      else { Log "Caddy failed to start - check D:\000\dsh\caddy.err" }
+    }
   } catch {
-    Log ("ERR: " + $_.Exception.Message)
+    Log ("ERR: " + $_.Exception.Message + " @ " + $_.InvocationInfo.ScriptLineNumber + ":" + $_.InvocationInfo.OffsetInLine)
   }
   Start-Sleep -Seconds 8
 }
