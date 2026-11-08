@@ -122,23 +122,25 @@ def deploy_pc(env):
             print('  + ' + dst)
 
     # 计划任务 (schtasks XML, 绕开 Register-ScheduledTask 的 Access denied)
-    xml_src = os.path.join(REPO, 'pc/dsh/u2mcp-task.xml')
-    if os.path.exists(xml_src):
-        io.open(DSH_DIR + r'\u2mcp-task.xml', 'w', encoding='utf-8', newline='\n').write(
+    for task_name, xml_rel in [
+            ('U2MCP-Supervisor', 'pc/dsh/u2mcp-task.xml'),
+            ('CS-Worker', 'pc/scripts/worker-task.xml')]:
+        xml_src = os.path.join(REPO, xml_rel.replace('/', os.sep))
+        if not os.path.exists(xml_src):
+            continue
+        dst = DSH_DIR + '\\' + os.path.basename(xml_rel)
+        io.open(dst, 'w', encoding='utf-8', newline='\n').write(
             io.open(xml_src, encoding='utf-8').read())
-        subprocess.run(['schtasks', '/Create', '/TN', 'U2MCP-Supervisor',
-                        '/XML', DSH_DIR + r'\u2mcp-task.xml', '/F'],
-                       capture_output=True)
-        print('  + U2MCP-Supervisor task')
+        r = subprocess.run(['schtasks', '/Create', '/TN', task_name,
+                            '/XML', dst, '/F'], capture_output=True, text=True)
+        ok = 'SUCCESS' in (r.stdout or '') or (r.returncode == 0)
+        print('  [%s] %s task' % ('OK ' if ok else 'ERR', task_name))
 
-    # 启动 worker
-    worker = os.path.join(REPO, 'orchestrator/worker.py')
-    ps = r'''Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like "*orchestrator\worker.py*" } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
-Start-Sleep -Seconds 2
-Start-Process -FilePath "C:\adb\Farm\.venv\Scripts\python.exe" -ArgumentList @("%s","--interval","5","--name","pc-longz") -WorkingDirectory "%s" -RedirectStandardOutput "%s\logs\worker.log" -RedirectStandardError "%s\logs\worker.err" -PassThru -WindowStyle Hidden''' % (
-        worker, os.path.join(REPO, 'orchestrator'), DSH_DIR, DSH_DIR)
-    subprocess.run(['powershell', '-NoProfile', '-Command', ps], capture_output=True)
-    print('  + worker 启动')
+    # 启动 worker (交给计划任务 CS-Worker 管, 不手动起)
+    subprocess.run(['powershell', '-NoProfile', '-Command', r'''Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like "*orchestrator\worker.py*" } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
+Start-Sleep -Seconds 3
+schtasks /Run /TN "CS-Worker"'''], capture_output=True)
+    print('  + CS-Worker 任务已启动')
 
     # 重启 DSH supervisor (加载 env 版)
     subprocess.run(['powershell', '-NoProfile', '-Command', r'''Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" | Where-Object { $_.CommandLine -match "dsh-supervisor" } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }

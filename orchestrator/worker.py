@@ -17,6 +17,23 @@ import os
 import sys
 import time
 
+# 计划任务下 stdout 被 cmd 重定向到文件, Windows 默认给 GBK 句柄,
+# reconfigure 对文件句柄无效 -> 中文日志乱码。
+# 可靠解法: 所有日志先转义成 ASCII-safe 的 \\uXXXX, 写出去就不会乱码。
+def log(*args, **kwargs):
+    """安全打印: 非 ASCII 转义, 保证任何句柄/编码下都不乱码"""
+    try:
+        text = ' '.join(str(a) for a in args)
+        text = text.encode('unicode_escape').decode('ascii')
+        print(text, flush=kwargs.get('flush', True))
+    except Exception:
+        try:
+            print(' '.join(str(a) for a in args).encode('ascii', 'backslashreplace').decode('ascii'),
+                  flush=kwargs.get('flush', True))
+        except Exception:
+            pass
+
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import net  # noqa: E402  (import 时清掉系统代理)
 post_json = net.post_json
@@ -62,7 +79,7 @@ class Worker:
         if st == 204:
             return None
         if st != 200:
-            print('[claim] http %s %s' % (st, body[:150]), flush=True)
+            log('[claim] http %s %s' % (st, body[:150]))
             return None
         try:
             return json.loads(body)
@@ -97,7 +114,7 @@ class Worker:
                    'result': result, 'error': error}
         st, body = http_json(self.server + '/result', payload, timeout=30)
         if st != 200:
-            print('[report] http %s %s' % (st, body[:150]), flush=True)
+            log('[report] http %s %s' % (st, body[:150]))
 
     def run_once(self):
         job = self.claim()
@@ -105,16 +122,16 @@ class Worker:
             return False
         jid = job.get('job_id')
         self.stats['claimed'] += 1
-        print('[claim] %s  model=%s  prompt=%r' % (
+        log('[claim] %s  model=%s  prompt=%r' % (
             jid, job.get('model'), str(job.get('prompt'))[:80]), flush=True)
         status, result, error = self.execute(job)
         self.report(jid, status, result, error)
         if status == 'done':
             self.stats['done'] += 1
-            print('[done ] %s  -> %r' % (jid, str(result.get('content'))[:120]), flush=True)
+            log('[done ] %s  -> %r' % (jid, str(result.get('content'))[:120]))
         else:
             self.stats['failed'] += 1
-            print('[fail ] %s  -> %s' % (jid, error), flush=True)
+            log('[fail ] %s  -> %s' % (jid, error))
         return True
 
 
@@ -140,12 +157,12 @@ def main():
         sys.exit(2)
 
     w = Worker(a.server, a.dsh, a.key, a.name)
-    print('worker up: server=%s  dsh=%s' % (a.server, a.dsh), flush=True)
+    log('worker up: server=%s  dsh=%s' % (a.server, a.dsh))
     if a.once:
         w.run_once()
-        print('stats:', w.stats, flush=True)
+        log('stats:', w.stats)
         return
-    print('polling every %ds (Ctrl-C to stop)' % a.interval, flush=True)
+    log('polling every %ds (Ctrl-C to stop)' % a.interval)
     try:
         while True:
             try:
@@ -153,10 +170,10 @@ def main():
             except KeyboardInterrupt:
                 raise
             except Exception as e:
-                print('[loop] %s' % e, flush=True)
+                log('[loop] %s' % e)
             time.sleep(a.interval)
     except KeyboardInterrupt:
-        print('\nbye  stats=%s' % w.stats, flush=True)
+        log('\nbye  stats=%s' % w.stats)
 
 
 if __name__ == '__main__':
