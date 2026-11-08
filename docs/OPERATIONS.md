@@ -29,7 +29,7 @@ python scripts/bootstrap.py check
 | DSH 网关 (Tailscale) | `http://100.117.110.112:8327/v1/` + `Bearer LOBE-2026-SHELL` |
 | 公网 (VPS) | `https://23.95.35.82.nip.io:8444/h/` |
 | u2mcp MCP | `http://100.117.110.112:8765/mcp` + `Bearer u2mcp-mobile-2026` |
-| 编排器 | `http://100.109.206.100:9000/health` |
+| 编排器 | `http://100.109.206.100:9000/health`（无鉴权）/ 其余接口需 `Bearer $CS_TOKEN` |
 
 **token 每次 DSH 重启都会变** → 从 `D:\000\dsh\dsh-web.log` 最后一行 `dsh web: http://...token=` 取。
 supervisor 会自动把新 token 同步到 Caddy 和 VPS 公网短链。
@@ -49,8 +49,11 @@ ssh vps "systemctl restart control-station && systemctl is-active control-statio
 # 看 VPS 编排器日志
 ssh vps "tail -30 /opt/control-station/orchestrator.log"
 
-# 看最近任务
-curl http://100.109.206.100:9000/jobs
+# 看最近任务 (需要 token)
+curl -H "Authorization: Bearer $CS_TOKEN" http://100.109.206.100:9000/jobs
+
+# 取 VPS 上自动生成的 token (若 .env 里没配 CS_TOKEN)
+ssh vps "cat /opt/control-station/queue/token.txt"
 ```
 
 ## SSH 到 VPS
@@ -98,4 +101,4 @@ python scripts/bootstrap.py pc
 - **手机/平板 Tailscale 离线** → 锁屏即断，无线 adb 关掉。本轮不依赖移动端实测。
 - **OpenCode 免费池 429** → 上游免费额度用尽，与本仓库无关。
 - **DSH 冷启动 40-220 秒** → Bun 拉模型列表 + NIM 探测；supervisor 等待上限 300 秒 + 进程存活守卫。
-- **编排器无鉴权** → 目前靠 Tailscale 内网隔离。对公网暴露前必须加访问控制。
+- **编排器无速率限制** → 有 token 鉴权，但没有请求频率限制。对公网暴露前建议加 nginx limit_req 或在编排器里加计数。

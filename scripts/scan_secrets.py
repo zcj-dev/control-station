@@ -27,6 +27,8 @@ RULES = [
     ('Reality private key', re.compile(r'\bECEbwOuA2oeHiZ4mDHUICztbRsFjfdU9Y4P4wtAiqV4\b')),
     ('Reality public key', re.compile(r'\buIJAngLbccDZAUM3ptt5VYKLIbmtRb8e4aWXUr-ebXU\b')),
     ('Reality uuid', re.compile(r'\baa45d12b-2863-49f9-84c4-214f509d3c67\b')),
+    # 编排器 Bearer token: 43 位 urlsafe base64 (secrets.token_urlsafe(32))
+    ('CS_TOKEN', re.compile(r'(?<![A-Za-z0-9_\-])[A-Za-z0-9_\-]{43}(?![A-Za-z0-9_\-])')),
 ]
 
 # 设计上的公开常量, 不是真密钥

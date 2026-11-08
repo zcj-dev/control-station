@@ -83,27 +83,42 @@ python scripts/bootstrap.py check
 ## 闭环用法
 
 ```bash
-# 提交指令 (任何能访问 VPS:9000 的地方)
+# 提交指令 (需要 Bearer token)
 curl -X POST http://100.109.206.100:9000/submit \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $CS_TOKEN" \
   -d '{"prompt":"总结今天的部署","model":"nvidia_nim/stepfun-ai/step-5-preview"}'
 # => {"ok": true, "job_id": "job-xxxx", "status": "queued"}
 
 # 查询结果
-curl http://100.109.206.100:9000/status/job-xxxx
+curl -H "Authorization: Bearer $CS_TOKEN" \
+  http://100.109.206.100:9000/status/job-xxxx
 ```
 
-**实测**：提交 → VPS 队列 → PC worker 领 → DSH 调度模型 → 执行 → 回传，**26.74 秒完成**。
+**实测**：提交 → VPS 队列 → PC worker 领 → DSH 调度模型 → 执行 → 回传，**14-50 秒完成**。
 
 ## 安全设计
 
 | 层 | 机制 |
 |---|---|
 | 密钥 | 全部在 `.env`（已 gitignore）+ `.env.example` 占位；`scan_secrets.py` 入库前强制扫描 |
+| **编排器** | **Bearer token 鉴权**（`CS_TOKEN`）+ UFW 9000 未放行 → 双保险 |
 | 网关 | Caddy 层校验 `Bearer LOBE-2026-SHELL`，无 key 直接 401 |
 | 公网 | nginx TLS + Let's Encrypt 真证书 + 访问口令 + DSH 签名 cookie |
 | Origin | DSH `trustedHosts` 白名单 |
-| 编排器 | 仅监听 Tailscale 内网可达地址（建议加访问控制） |
+
+**编排器鉴权行为**：
+
+| 请求 | 无 token | 有 token |
+|---|---|---|
+| `GET /health` | 200（只返回最简，不泄露 jobs 数） | 200 |
+| `GET /jobs` | **401** | 200 |
+| `GET /status/<id>` | **401** | 200 |
+| `POST /submit` | **401** | 202 |
+| `POST /claim` / `/result` | **401** | 200 |
+
+Token 优先从 `CS_TOKEN` 环境变量读；未配置时 VPS 自动生成随机 token 落盘到
+`/opt/control-station/queue/token.txt`（权限 600，重启不变）。
 
 ## 关键约束
 

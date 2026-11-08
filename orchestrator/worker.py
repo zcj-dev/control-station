@@ -66,17 +66,28 @@ def http_json(url, payload=None, timeout=180, headers=None):
 
 
 class Worker:
-    def __init__(self, server, dsh_url, dsh_key, name='pc-worker'):
+    def __init__(self, server, dsh_url, dsh_key, name='pc-worker', cs_token=None):
         self.server = server.rstrip('/')
         self.dsh_url = dsh_url.rstrip('/')
         self.dsh_key = dsh_key
         self.name = name
+        self.cs_token = cs_token
         self.stats = {'claimed': 0, 'done': 0, 'failed': 0}
+
+    def _cs_headers(self):
+        """编排器鉴权头 (CS_TOKEN)"""
+        if self.cs_token:
+            return {'Authorization': 'Bearer ' + self.cs_token}
+        return None
 
     def claim(self):
         url = self.server + '/claim'
-        st, body = http_json(url, {'worker': self.name}, timeout=30)
+        st, body = http_json(url, {'worker': self.name}, timeout=30,
+                             headers=self._cs_headers())
         if st == 204:
+            return None
+        if st == 401:
+            log('[claim] 401 unauthorized - 检查 .env 里的 CS_TOKEN')
             return None
         if st != 200:
             log('[claim] http %s %s' % (st, body[:150]))
@@ -112,7 +123,8 @@ class Worker:
     def report(self, job_id, status, result=None, error=None):
         payload = {'job_id': job_id, 'status': status,
                    'result': result, 'error': error}
-        st, body = http_json(self.server + '/result', payload, timeout=30)
+        st, body = http_json(self.server + '/result', payload, timeout=30,
+                             headers=self._cs_headers())
         if st != 200:
             log('[report] http %s %s' % (st, body[:150]))
 
@@ -147,6 +159,7 @@ def main():
     ap.add_argument('--dsh', default=os.environ.get('DSH_GATEWAY_URL',
                     'http://127.0.0.1:%s' % env.get('DSH_GATEWAY_PORT', '8326')))
     ap.add_argument('--key', default=os.environ.get('DSH_GATEWAY_KEY', ''))
+    ap.add_argument('--cs-token', default=os.environ.get('CS_TOKEN', ''))
     ap.add_argument('--interval', type=int, default=5)
     ap.add_argument('--once', action='store_true')
     ap.add_argument('--name', default='pc-worker')
@@ -155,9 +168,13 @@ def main():
     if not a.key:
         print('ERROR: DSH gateway key missing (check %s)' % DEFAULT_ENV, file=sys.stderr)
         sys.exit(2)
+    if not a.cs_token:
+        print('ERROR: CS_TOKEN missing (check %s) - 编排器现在需要鉴权' % DEFAULT_ENV,
+              file=sys.stderr)
+        sys.exit(2)
 
-    w = Worker(a.server, a.dsh, a.key, a.name)
-    log('worker up: server=%s  dsh=%s' % (a.server, a.dsh))
+    w = Worker(a.server, a.dsh, a.key, a.name, a.cs_token)
+    log('worker up: server=%s  dsh=%s  auth=token' % (a.server, a.dsh))
     if a.once:
         w.run_once()
         log('stats:', w.stats)

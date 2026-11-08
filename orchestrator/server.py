@@ -5,19 +5,22 @@ orchestrator/server.py —— 中控站指令编排器 (VPS 侧)
 
 零外部依赖 (只用标准库), 直接 `python3 server.py` 就能跑。
 
+安全:
+  - Bearer token 鉴权 (CS_TOKEN)。未配置时自动生成随机 token 并落盘,
+    只打印一次, 写入 state 文件供 worker/运维取用。
+  - /health 无鉴权但只返回最简信息 (不泄露 job 数量/内容)。
+  - 配合 VPS 的 UFW (9000 未放行) 形成双保险: 内网可达 + 必须持 token。
+
 职责:
-  1. 接收指令 (HTTP POST /submit)
+  1. 接收指令 (POST /submit)
   2. 落盘队列 (JSONL, 防丢)
   3. 轮询执行器 (PC 侧 worker) 来拉取并回报结果
-  4. 状态查询 (HTTP GET /status/<job_id>)
-
-闭环:
-  VPS 指令 -> 队列 -> PC worker 拉取 -> 调 DSH 网关 :8326 调度模型执行
-           -> worker 回报 -> VPS 队列更新状态 -> 调用方查询结果
+  4. 状态查询 (GET /status/<job_id>)
 """
 import http.server
 import json
 import os
+import secrets
 import socket
 import threading
 import time
@@ -29,8 +32,39 @@ QUEUE_DIR = os.path.join(BASE, 'queue')
 PENDING = os.path.join(QUEUE_DIR, 'pending.jsonl')
 RESULTS = os.path.join(QUEUE_DIR, 'results.jsonl')
 STATE = os.path.join(QUEUE_DIR, 'state.json')
+TOKEN_FILE = os.path.join(QUEUE_DIR, 'token.txt')
 
 os.makedirs(QUEUE_DIR, exist_ok=True)
+
+
+def load_or_make_token():
+    """CS_TOKEN 优先; 否则用落盘的随机 token (重启不变)"""
+    env_token = (os.environ.get('CS_TOKEN') or '').strip()
+    if env_token:
+        return env_token, 'env'
+    if os.path.exists(TOKEN_FILE):
+        try:
+            t = io_read(TOKEN_FILE).strip()
+            if t:
+                return t, 'file'
+        except Exception:
+            pass
+    t = secrets.token_urlsafe(32)
+    try:
+        with open(TOKEN_FILE, 'w', encoding='utf-8') as f:
+            f.write(t)
+        os.chmod(TOKEN_FILE, 0o600)
+    except Exception:
+        pass
+    return t, 'generated'
+
+
+def io_read(path):
+    with open(path, encoding='utf-8') as f:
+        return f.read()
+
+
+TOKEN, TOKEN_SOURCE = load_or_make_token()
 
 _lock = threading.Lock()
 _state = {}
@@ -56,10 +90,14 @@ def _append(path, obj):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = 'control-station/1.0'
+    server_version = 'control-station/1.1'
 
     def log_message(self, fmt, *args):
-        print('[%s] %s' % (time.strftime('%H:%M:%S'), fmt % args), flush=True)
+        try:
+            msg = fmt % args
+        except Exception:
+            msg = str(args)
+        print('[%s] %s' % (time.strftime('%H:%M:%S'), msg), flush=True)
 
     def _json(self, code, obj):
         body = json.dumps(obj, ensure_ascii=False).encode('utf-8')
@@ -69,13 +107,28 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _authed(self):
+        """校验 Bearer token"""
+        h = self.headers.get('Authorization', '') or ''
+        if not h.startswith('Bearer '):
+            return False
+        got = h[7:].strip()
+        # 常量时间比较, 防时序侧信道
+        return secrets.compare_digest(got, TOKEN)
+
     def do_GET(self):
         path = self.path.split('?')[0].rstrip('/')
+
+        # /health 无鉴权, 但只返回最简信息 (不泄露 jobs 数量)
         if path in ('', '/health'):
-            self._json(200, {'ok': True, 'service': 'control-station',
-                             'jobs': len(_state),
-                             'time': time.time()})
-        elif path.startswith('/status/'):
+            self._json(200, {'ok': True, 'service': 'control-station'})
+            return
+
+        if not self._authed():
+            self._json(401, {'error': 'unauthorized', 'hint': 'Authorization: Bearer <CS_TOKEN>'})
+            return
+
+        if path.startswith('/status/'):
             jid = path.split('/status/', 1)[1]
             with _lock:
                 st = _state.get(jid)
@@ -99,6 +152,10 @@ class Handler(BaseHTTPRequestHandler):
             payload = json.loads(raw.decode('utf-8'))
         except Exception as e:
             self._json(400, {'error': 'bad json', 'detail': str(e)})
+            return
+
+        if not self._authed():
+            self._json(401, {'error': 'unauthorized', 'hint': 'Authorization: Bearer <CS_TOKEN>'})
             return
 
         if path == '/submit':
@@ -177,14 +234,19 @@ class Handler(BaseHTTPRequestHandler):
 
 def main():
     port = int(os.environ.get('CS_PORT', '9000'))
-    srv = ThreadingHTTPServer(('0.0.0.0', port), Handler)
-    print('control-station orchestrator listening on 0.0.0.0:%d' % port, flush=True)
+    # 只绑 Tailscale 网卡更安全, 但 VPS 的 Tailscale IP 可能变;
+    # 这里绑 0.0.0.0, 由 UFW (9000 未放行) + token 双保险保护。
+    bind = os.environ.get('CS_BIND', '0.0.0.0')
+    srv = ThreadingHTTPServer((bind, port), Handler)
+    print('control-station orchestrator listening on %s:%d' % (bind, port), flush=True)
+    print('  token source: %s' % TOKEN_SOURCE, flush=True)
+    print('  auth: Authorization: Bearer <CS_TOKEN>', flush=True)
+    print('  /health is public (minimal info only)', flush=True)
     print('  POST /submit   {"prompt": "...", "model": "..."}', flush=True)
     print('  POST /claim    {} (worker 领任务)', flush=True)
     print('  POST /result   {"job_id": "...", "status": "done", "result": "..."}', flush=True)
     print('  GET  /status/<job_id>', flush=True)
     print('  GET  /jobs     (最近 50 条)', flush=True)
-    print('  GET  /health', flush=True)
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

@@ -77,6 +77,11 @@ def deploy_vps(env):
         code, _, err = vps_put(ssh, local, remote, '755')
         print('  %-12s -> %s  %s' % (name, remote, 'OK' if code == 0 else 'ERR ' + err[:80]))
 
+    # CS_TOKEN: env 优先; 没有就让 VPS 自动生成 (落盘 token.txt, 重启不变)
+    cs_token = (env.get('CS_TOKEN') or '').strip()
+    token_line = 'Environment=CS_TOKEN=%s' % cs_token if cs_token else \
+                 '# CS_TOKEN not set - server will generate one into queue/token.txt'
+
     unit = '''[Unit]
 Description=control-station orchestrator
 After=network-online.target
@@ -86,6 +91,8 @@ Wants=network-online.target
 Type=simple
 WorkingDirectory=/opt/control-station
 Environment=CS_PORT=9000
+Environment=CS_BIND=0.0.0.0
+%s
 ExecStart=/usr/bin/python3 /opt/control-station/server.py
 Restart=always
 RestartSec=5
@@ -94,7 +101,7 @@ StandardError=append:/opt/control-station/orchestrator.err
 
 [Install]
 WantedBy=multi-user.target
-'''
+''' % token_line
     b64 = base64.b64encode(unit.encode('utf-8')).decode('ascii')
     vps_run(ssh, "echo '%s' | base64 -d > /etc/systemd/system/control-station.service" % b64)
     vps_run(ssh, 'systemctl daemon-reload && systemctl enable control-station 2>&1 | tail -1')
@@ -103,6 +110,11 @@ WantedBy=multi-user.target
     time.sleep(5)
     code, out, _ = vps_run(ssh, 'systemctl is-active control-station')
     print('  systemd:', out.strip())
+    if not cs_token:
+        code, out, _ = vps_run(ssh, 'cat /opt/control-station/queue/token.txt 2>/dev/null')
+        if out.strip():
+            print('  auto-generated token (copy to PC .env as CS_TOKEN):')
+            print('    ' + out.strip())
     ssh.close()
     print('  VPS 部署完成')
 
@@ -183,6 +195,21 @@ def check(env):
     if mark == 'DOWN':
         ok = False
     print('  [%s] VPS 编排器   %s' % (mark, body[:70]))
+
+    # 编排器鉴权验证 (带 token 应 200, 不带应 401)
+    cs_token = env.get('CS_TOKEN', '')
+    if cs_token:
+        st_auth, _ = net.get_json('http://%s:%s/jobs' % (
+            env.get('VPS_TAILSCALE_IP', '100.109.206.100'), env.get('CS_PORT', '9000')),
+            timeout=10, headers={'Authorization': 'Bearer ' + cs_token})
+        st_noauth, _ = net.get_json('http://%s:%s/jobs' % (
+            env.get('VPS_TAILSCALE_IP', '100.109.206.100'), env.get('CS_PORT', '9000')),
+            timeout=10)
+        if st_auth == 200 and st_noauth == 401:
+            print('  [OK ] 编排器鉴权   有token=200 / 无token=401')
+        else:
+            print('  [?? ] 编排器鉴权   有token=%s / 无token=%s (期望 200/401)'
+                  % (st_auth, st_noauth))
 
     # 网关模型: 必须带 shell key (Caddy 层拦截, 不带就是 401 —— 那是安全的)
     shell_key = env.get('DSH_SHELL_KEY', '')
