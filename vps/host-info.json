@@ -1,0 +1,9 @@
+{
+  "os": "PRETTY_NAME=\"Debian GNU/Linux 12 (bookworm)\"",
+  "kernel": "6.1.0-31-amd64",
+  "docker_version": "Docker version 20.10.24+dfsg1, build 297e128",
+  "nginx_version": "nginx version: nginx/1.22.1",
+  "ufw": "Status: active\n\nTo                         Action      From\n--                         ------      ----\n22/tcp                     ALLOW       Anywhere                  \n80/tcp                     ALLOW       Anywhere                   # HTTP/ACME\n443/tcp                    ALLOW       Anywhere                  \n443/udp                    ALLOW       Anywhere                   # Hysteria2/TUIC\n51820/udp                  ALLOW       Anywhere                   # WireGuard residential exit\n8443/udp                   ALLOW       Anywhere                  \n8444/udp                   ALLOW       Anywhere                   # TUIC\n8443/tcp                   ALLOW       Anywhere                  \n9443/tcp                   ALLOW       Anywhere                  \n19999/tcp                  ALLOW       Anywhere                  \n8081/tcp                   ALLOW       Anywhere                  \n9443/udp                   ALLOW       Anywhere                  \n8444/tcp                   ALLOW       Anywhere                   # DSH harness HTTPS\n22/tcp (v6)                ALLOW       Anywhere (v6)             \n80/tcp (v6)                ALLOW       Anywhere (v6)              # HTTP/ACME\n443/tcp (v6)               ALLOW       Anywhere (v6)",
+  "tailscale_ip": "100.109.206.100",
+  "docker_networks": "bridge\nearnfm-net\nhost\nmonitoring\nnone\nresinet\nsing-box-net"
+}

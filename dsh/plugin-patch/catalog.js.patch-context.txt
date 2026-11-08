@@ -1,0 +1,41 @@
+# dsh-our-free-model/src/catalog.js 的关键行 (上下文补丁锚点)
+# 完整补丁脚本见 scripts/patch_plugin.py
+
+  24:  * Local capability baseline. `contextWindow`/`maxOutput` are the provider's
+  51:   { match: /^mimo.*v2\.6/, vision: true, reasoning: true, contextWindow: 2147483647, maxOutput: 131072, canDisableThinking: false },
+  52:   { match: /^mimo.*v2\.5/, vision: true, reasoning: true, contextWindow: 2147483647, maxOutput: 131072, canDisableThinking: false },
+  53:   { match: /^mimo/, vision: true, reasoning: true, contextWindow: 262144, maxOutput: 131072 },
+  54:   { match: /^muse.?spark/, vision: true, reasoning: true, contextWindow: 2147483647, maxOutput: 131072 },
+  55:   { match: /^nemotron/, vision: false, reasoning: true, contextWindow: 128000, maxOutput: 32768 },
+  56:   { match: /^ling/, vision: false, reasoning: true, contextWindow: 128000, maxOutput: 32768 },
+  57:   { match: /^space.?bunny/, vision: true, reasoning: true, contextWindow: 262144, maxOutput: 65536 },
+  58:   { match: /^union/, vision: true, reasoning: false, contextWindow: 262144, maxOutput: 131072 },
+  59:   { match: /^deepseek/, vision: false, reasoning: true, contextWindow: 128000, maxOutput: 64000 },
+  60:   { match: /^jev/, vision: false, reasoning: false, contextWindow: 32768, maxOutput: 4096 },
+  93:  * - `contextWindow`: models.dev publishes `200000` for the `-free` ids, but
+ 110:     vision: true, contextWindow: 2147483647, maxOutput: 384000,
+ 118:     vision: true, contextWindow: 2147483647, maxOutput: 131072,
+ 124:     vision: true, contextWindow: 2147483647, maxOutput: 131072,
+ 131:     vision: true, contextWindow: 2147483647, maxOutput: 524288,
+ 138:     vision: false, contextWindow: 2147483647, maxOutput: 131072,
+ 142:   'big-pickle': { vision: true, contextWindow: 262144, maxOutput: 131072 },
+ 188:   return { vision: false, reasoning: true, contextWindow: 131072, maxOutput: 32768 }
+ 233:       contextWindow: number(caps.contextWindow) ?? 131072,
+ 234:       maxOutput: number(caps.maxOutput) ?? 32768,
+ 319:     vision: true, reasoning: true, contextWindow: 2147483647, maxOutput: 384000,
+ 326:     vision: true, reasoning: true, contextWindow: 2147483647, maxOutput: 131072,
+ 332:     vision: true, reasoning: true, contextWindow: 2147483647, maxOutput: 384000,
+ 339:     vision: true, reasoning: true, contextWindow: 2147483647, maxOutput: 131072,
+ 345:     vision: true, reasoning: true, contextWindow: 262144, maxOutput: 98304,
+ 351:     vision: true, reasoning: true, contextWindow: 2147483647, maxOutput: 131072,
+ 357:     vision: false, reasoning: true, contextWindow: 2147483647, maxOutput: 131072,
+ 363:     vision: false, reasoning: true, contextWindow: 131072, maxOutput: 32768,
+ 394:   return { vision: false, reasoning: true, contextWindow: 131072, maxOutput: 32768 }
+ 424:       contextWindow: number(caps.contextWindow) ?? 131072,
+ 425:       maxOutput: number(caps.maxOutput) ?? 32768,
+ 540:     contextWindow: context,
+ 541:     maxOutput: output,
+ 568:     entry.contextWindow = 2147483647
+ 569:     entry.maxOutput = 1048576
+ 590:       contextWindow: 2147483647,
+ 591:       maxOutput: 1048576,

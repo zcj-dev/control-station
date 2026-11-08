@@ -1,0 +1,28 @@
+:8327 {
+    @authorized {
+        header Authorization "Bearer LOBE-2026-SHELL"
+    }
+    handle @authorized {
+        reverse_proxy 127.0.0.1:8326 {
+            header_up Authorization "Bearer ${DSH_GATEWAY_KEY}"
+        }
+    }
+    handle {
+        respond 401
+    }
+}
+
+:3081 {
+    @d path /d /d/*
+    handle @d {
+        rewrite * /?token=${DSH_LAUNCH_TOKEN}
+        reverse_proxy 100.117.110.112:3080 {
+            header_down Location "http://100.117.110.112:3081/"
+        }
+    }
+    handle {
+        reverse_proxy 100.117.110.112:3080 {
+            header_down Location "http://100.117.110.112:3081/"
+        }
+    }
+}

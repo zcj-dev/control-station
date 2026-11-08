@@ -1,0 +1,362 @@
+{
+  "version": 1,
+  "at": 1794102321235,
+  "entries": [
+    "big-pickle",
+    "beam-free",
+    "flint-40b-free",
+    "mimo-v2.6-flash-free",
+    "nemotron-3.5-super-vl-free",
+    "nemotron-3.5-lightning-free",
+    "deepseek-v4.1-flash-free",
+    "glm-5.3-flash-free",
+    "crouton-alpha-free",
+    "iceman-free",
+    "inkling-2-small-free"
+  ],
+  "sealIds": [
+    "opencode/nemotron-3.5-lightning-free",
+    "minimaxai/minimax-m3.1-flash",
+    "openai/gpt-oss-20b",
+    "opencode/flint-40b-free",
+    "z-ai/glm-5.3-flash",
+    "stepfun-ai/step-5-preview",
+    "deepseek-ai/deepseek-v4.1-flash",
+    "opencode/glm-5.3-flash-free",
+    "mimo-v2.6-flash-free",
+    "opencode/nemotron-3.5-super-vl-free",
+    "opencode/deepseek-v4.1-flash-free"
+  ],
+  "kiloRows": [
+    {
+      "id": "kilo-auto/free",
+      "name": "Kilo Auto Free",
+      "channel": "kilo",
+      "wire": "chat",
+      "vision": false,
+      "reasoning": true,
+      "contextWindow": 2147483647,
+      "maxOutput": 1048576,
+      "canDisableThinking": false,
+      "regionSensitive": false,
+      "efforts": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "effortDefault": "high",
+      "effortPatch": {
+        "reasoning": {
+          "effort": "$effort"
+        }
+      }
+    },
+    {
+      "id": "nvidia/nemotron-3.5-super-vl:free",
+      "name": "Kilo Nemotron 3.5 Super VL",
+      "channel": "kilo",
+      "wire": "chat",
+      "vision": true,
+      "reasoning": true,
+      "contextWindow": 2147483647,
+      "maxOutput": 1048576,
+      "canDisableThinking": true,
+      "regionSensitive": false,
+      "efforts": [
+        "disabled",
+        "low",
+        "medium",
+        "high"
+      ],
+      "effortDefault": "high",
+      "effortPatch": {
+        "reasoning": {
+          "effort": "$effort"
+        }
+      },
+      "effortOffPatch": {
+        "reasoning": {
+          "enabled": false
+        }
+      }
+    },
+    {
+      "id": "reflection/beam-free",
+      "name": "Kilo Beam 1.0",
+      "channel": "kilo",
+      "wire": "chat",
+      "vision": false,
+      "reasoning": true,
+      "contextWindow": 2147483647,
+      "maxOutput": 1048576,
+      "canDisableThinking": true,
+      "regionSensitive": false,
+      "efforts": [
+        "disabled",
+        "low",
+        "medium",
+        "high"
+      ],
+      "effortDefault": "high",
+      "effortPatch": {
+        "reasoning": {
+          "effort": "$effort"
+        }
+      },
+      "effortOffPatch": {
+        "reasoning": {
+          "enabled": false
+        }
+      }
+    },
+    {
+      "id": "stealth/glyph-cluster",
+      "name": "Kilo Glyph Cluster",
+      "channel": "kilo",
+      "wire": "chat",
+      "vision": false,
+      "reasoning": true,
+      "contextWindow": 2147483647,
+      "maxOutput": 1048576,
+      "canDisableThinking": true,
+      "regionSensitive": false,
+      "efforts": [
+        "disabled",
+        "low",
+        "medium",
+        "high"
+      ],
+      "effortDefault": "high",
+      "effortPatch": {
+        "reasoning": {
+          "effort": "$effort"
+        }
+      },
+      "effortOffPatch": {
+        "reasoning": {
+          "enabled": false
+        }
+      }
+    },
+    {
+      "id": "liquid/lfm-3-1.7b:free",
+      "name": "Kilo LFM3-1.7B",
+      "channel": "kilo",
+      "wire": "chat",
+      "vision": false,
+      "reasoning": true,
+      "contextWindow": 2147483647,
+      "maxOutput": 1048576,
+      "canDisableThinking": false,
+      "regionSensitive": false,
+      "efforts": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "effortDefault": "high",
+      "effortPatch": {
+        "reasoning": {
+          "effort": "$effort"
+        }
+      }
+    },
+    {
+      "id": "stealth/crouton-alpha",
+      "name": "Kilo Crouton Alpha",
+      "channel": "kilo",
+      "wire": "chat",
+      "vision": true,
+      "reasoning": true,
+      "contextWindow": 2147483647,
+      "maxOutput": 1048576,
+      "canDisableThinking": true,
+      "regionSensitive": false,
+      "efforts": [
+        "disabled",
+        "low",
+        "medium",
+        "high"
+      ],
+      "effortDefault": "high",
+      "effortPatch": {
+        "reasoning": {
+          "effort": "$effort"
+        }
+      },
+      "effortOffPatch": {
+        "reasoning": {
+          "enabled": false
+        }
+      }
+    },
+    {
+      "id": "dots-studio/dots-3-note-preview:free",
+      "name": "Kilo Dots3-Note Preview",
+      "channel": "kilo",
+      "wire": "chat",
+      "vision": true,
+      "reasoning": true,
+      "contextWindow": 2147483647,
+      "maxOutput": 1048576,
+      "canDisableThinking": true,
+      "regionSensitive": false,
+      "efforts": [
+        "disabled",
+        "low",
+        "medium",
+        "high"
+      ],
+      "effortDefault": "high",
+      "effortPatch": {
+        "reasoning": {
+          "effort": "$effort"
+        }
+      },
+      "effortOffPatch": {
+        "reasoning": {
+          "enabled": false
+        }
+      }
+    },
+    {
+      "id": "nvidia/nemotron-3.5-lightning:free",
+      "name": "Kilo Nemotron 3.5 Lightning",
+      "channel": "kilo",
+      "wire": "chat",
+      "vision": false,
+      "reasoning": true,
+      "contextWindow": 2147483647,
+      "maxOutput": 1048576,
+      "canDisableThinking": true,
+      "regionSensitive": false,
+      "efforts": [
+        "disabled",
+        "low",
+        "medium",
+        "high"
+      ],
+      "effortDefault": "high",
+      "effortPatch": {
+        "reasoning": {
+          "effort": "$effort"
+        }
+      },
+      "effortOffPatch": {
+        "reasoning": {
+          "enabled": false
+        }
+      }
+    },
+    {
+      "id": "cohere/north-mini-code:free",
+      "name": "Kilo North Mini Code",
+      "channel": "kilo",
+      "wire": "chat",
+      "vision": false,
+      "reasoning": true,
+      "contextWindow": 2147483647,
+      "maxOutput": 1048576,
+      "canDisableThinking": true,
+      "regionSensitive": false,
+      "efforts": [
+        "disabled",
+        "low",
+        "medium",
+        "high"
+      ],
+      "effortDefault": "high",
+      "effortPatch": {
+        "reasoning": {
+          "effort": "$effort"
+        }
+      },
+      "effortOffPatch": {
+        "reasoning": {
+          "enabled": false
+        }
+      }
+    },
+    {
+      "id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "name": "Kilo Nemotron 3 Ultra",
+      "channel": "kilo",
+      "wire": "chat",
+      "vision": false,
+      "reasoning": true,
+      "contextWindow": 2147483647,
+      "maxOutput": 1048576,
+      "canDisableThinking": true,
+      "regionSensitive": false,
+      "efforts": [
+        "disabled",
+        "low",
+        "medium",
+        "high"
+      ],
+      "effortDefault": "high",
+      "effortPatch": {
+        "reasoning": {
+          "effort": "$effort"
+        }
+      },
+      "effortOffPatch": {
+        "reasoning": {
+          "enabled": false
+        }
+      }
+    },
+    {
+      "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+      "name": "Kilo Nemotron 3 Nano Omni",
+      "channel": "kilo",
+      "wire": "chat",
+      "vision": true,
+      "reasoning": true,
+      "contextWindow": 2147483647,
+      "maxOutput": 1048576,
+      "canDisableThinking": true,
+      "regionSensitive": false,
+      "efforts": [
+        "disabled",
+        "low",
+        "medium",
+        "high"
+      ],
+      "effortDefault": "high",
+      "effortPatch": {
+        "reasoning": {
+          "effort": "$effort"
+        }
+      },
+      "effortOffPatch": {
+        "reasoning": {
+          "enabled": false
+        }
+      }
+    },
+    {
+      "id": "openrouter/free",
+      "name": "Kilo OpenRouter Free Models Router",
+      "channel": "kilo",
+      "wire": "chat",
+      "vision": true,
+      "reasoning": true,
+      "contextWindow": 2147483647,
+      "maxOutput": 1048576,
+      "canDisableThinking": false,
+      "regionSensitive": false,
+      "efforts": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "effortDefault": "high",
+      "effortPatch": {
+        "reasoning": {
+          "effort": "$effort"
+        }
+      }
+    }
+  ]
+}

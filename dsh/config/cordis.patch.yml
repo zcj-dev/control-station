@@ -1,0 +1,159 @@
+# Your patch layer for this dsh profile, applied after every bundle layer:
+# a top-level YAML array of loader patch entries (id-targeted config
+# overrides, disables, and insert lists; `!!js` expressions allowed).
+- id: ui-settings-general
+  name: "@deepseek-ai/dsh-client-ui-settings-general"
+  config:
+    welcomeNoticeVersion: 2026-09-28.1
+- id: agent-default-model
+  name: "@deepseek-ai/dsh-agent-default-model"
+  config:
+    provider: nvidia-nim-selfhost
+    model: stepfun-ai/step-5-preview
+- id: permission
+  name: "@deepseek-ai/dsh-permission-presets"
+  config:
+    presets:
+      read-only:
+        sandbox: read-only
+        approval: ask
+      workspace-write:
+        sandbox: workspace-write
+        approval: ask
+      danger-full-access:
+        sandbox: danger-full-access
+        approval: never
+    defaultPreset: danger-full-access
+- id: llm-pi-ai
+  name: "@deepseek-ai/dsh-llm-pi-ai"
+  config:
+    providers:
+      nvidia-nim-selfhost:
+        displayName: My NVIDIA NIM
+        apiKeyEnv: NVIDIA_NIM_SELFHOST_API_KEY
+        api: openai-completions
+        baseURL: https://integrate.api.nvidia.com/v1
+        models:
+          - id: deepseek-ai/deepseek-v4.1-flash
+            name: deepseek-ai/deepseek-v4.1-flash
+            contextWindow: 2147483647
+            maxTokens: 1048576
+          - id: nvidia/nemotron-3-super-120b-a12b
+            name: nvidia/nemotron-3-super-120b-a12b
+            contextWindow: 2147483647
+            maxTokens: 1048576
+          - id: nvidia/nemotron-3-ultra-550b-a55b
+            name: nvidia/nemotron-3-ultra-550b-a55b
+            contextWindow: 2147483647
+            maxTokens: 1048576
+          - id: nvidia/nemotron-3.5-lightning-30b-a3b
+            name: nvidia/nemotron-3.5-lightning-30b-a3b
+            contextWindow: 2147483647
+            maxTokens: 1048576
+          - id: z-ai/glm-5.3
+            name: z-ai/glm-5.3
+            contextWindow: 2147483647
+            maxTokens: 1048576
+          - id: z-ai/glm-5.3-flash
+            name: z-ai/glm-5.3-flash
+            contextWindow: 2147483647
+            maxTokens: 1048576
+          - id: stepfun-ai/step-5-preview
+            name: stepfun-ai/step-5-preview
+            contextWindow: 2147483647
+            maxTokens: 1048576
+          - id: minimaxai/minimax-m3.1-flash
+            name: minimaxai/minimax-m3.1-flash
+            contextWindow: 2147483647
+            maxTokens: 1048576
+- id: ui-theme
+  name: "@deepseek-ai/dsh-client-ui-theme"
+  config:
+    preference: light
+    fontSize: 15
+- id: ui-conversation
+  name: "@deepseek-ai/dsh-client-ui-conversation"
+  config:
+    busyEnter: steer
+- id: ui-chat
+  name: "@deepseek-ai/dsh-client-ui-chat"
+  config:
+    transcriptView: verbose
+- id: ui-settings
+  name: "@deepseek-ai/dsh-client-ui-settings"
+  config:
+    enabled: true
+
+- id: connection
+  name: "@deepseek-ai/dsh-client-connection"
+  config:
+    trustedHosts:
+      - 100.117.110.112:3081
+      - 23.95.35.82.nip.io:8444
+      - 23.95.35.82.nip.io
+
+# ===== Token 娑堣€椾紭鍖?(2026-11-07) =====
+# 1) 宸ュ叿缁撴灉瑁佸壀: 榛樿 8192 瀛楃鎵嶈 -> 闄嶅埌 3000, 澶村熬鍚勭暀 1200/800
+- id: tool-result-pruner
+  name: "@deepseek-ai/dsh-compaction-tool-result-pruner"
+  config:
+    thresholdChars: 3000
+    headChars: 1200
+    tailChars: 800
+
+# 2) 鎻愬墠鍘嬬缉: 榛樿 0.8 鎵嶈Е鍙?-> 0.55, 淇濈暀 0.12, 鐣?8k headroom
+- id: compaction-basic
+  name: "@deepseek-ai/dsh-compaction-basic"
+  config:
+    auto: true
+    thresholdRatio: 0.62
+    retainRatio: 0.12
+    headroomTokens: 16384
+    compactionRetries: 3
+    maxOverflowRetries: 5
+    modelPolicies:
+      - target:
+          provider: reflection
+          model: beam-free
+        thresholdRatio: 0.68
+        retainRatio: 0.12
+        headroomTokens: 32768
+        maxTokens: 131072
+      - target:
+          provider: nvidia
+          model: nemotron-3.5-super-vl:free
+        thresholdRatio: 0.68
+        retainRatio: 0.12
+        headroomTokens: 32768
+        maxTokens: 131072
+      - target:
+          provider: nvidia
+          model: nemotron-3.5-lightning:free
+        thresholdRatio: 0.68
+        retainRatio: 0.12
+        headroomTokens: 32768
+        maxTokens: 65536
+      - target:
+          provider: nvidia
+          model: nemotron-3-ultra-550b-a55b:free
+        thresholdRatio: 0.68
+        retainRatio: 0.12
+        headroomTokens: 32768
+        maxTokens: 65536
+
+# 3) 鎵嬪姩 /compact 鍛戒护
+- id: command-compact
+  name: "@deepseek-ai/dsh-command-compact"
+  config:
+    maxInlineTokens: 4000
+
+# 4) token 璁￠噺: UI 閲屾樉绀烘瘡涓?session 鐨勭湡瀹?token 璐︽湰
+- id: token-meter
+  name: "@deepseek-ai/dsh-token-meter"
+- id: agent-preset-registry
+  name: "@deepseek-ai/dsh-agent-preset-registry"
+  config:
+    default: standard
+    selectedDefault: standard
+
+# ===== 工具裁剪: 减少工具定义占用的上下文 (2026-11-07) =====

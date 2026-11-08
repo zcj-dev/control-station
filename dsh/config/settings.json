@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "enabled": true,
+  "exposeRegionModels": true,
+  "hiddenModelIds": [],
+  "hideFreeModels": false,
+  "hideEacModels": false,
+  "probeIntervalMinutes": 15,
+  "forward": {
+    "enabled": true,
+    "host": "127.0.0.1",
+    "port": 8326,
+    "lan": {
+      "enabled": false,
+      "port": 0
+    }
+  },
+  "egress": {
+    "enabled": false,
+    "mode": "subscription",
+    "url": "",
+    "mihomoPath": ""
+  },
+  "chanGateway": {
+    "relay": {
+      "enabled": false,
+      "host": "127.0.0.1",
+      "port": 18326,
+      "key": ""
+    }
+  },
+  "defaultMaxTokens": 1048576,
+  "streamRecovery": true,
+  "tokenSaver": {
+    "enabled": false,
+    "rtk": false,
+    "prompts": {
+      "caveman": "off",
+      "ponytail": "off"
+    }
+  },
+  "aggregate": {
+    "enabled": true,
+    "providers": {
+      "nvidia_nim": {
+        "enabled": true,
+        "apiKey": "${APIKEY}",
+        "baseUrl": "https://integrate.api.nvidia.com/v1",
+        "models": [
+          "deepseek-ai/deepseek-v4.1-flash",
+          "nvidia/nemotron-3-super-120b-a12b",
+          "nvidia/nemotron-3-ultra-550b-a55b",
+          "nvidia/nemotron-3.5-lightning-30b-a3b",
+          "z-ai/glm-5.3",
+          "z-ai/glm-5.3-flash",
+          "stepfun-ai/step-5-preview",
+          "minimaxai/minimax-m3.1-flash"
+        ]
+      }
+    }
+  },
+  "combos": [],
+  "localOptimize": {
+    "enabled": false,
+    "quota": true,
+    "prefix": true,
+    "title": true,
+    "suggestion": true,
+    "filepath": true
+  },
+  "announcementAck": "2026-10-17.3",
+  "disclaimerAck": 2,
+  "catalogSyncedAt": 1794102321425,
+  "feedUrl": "",
+  "feedPollMinutes": 30,
+  "notifyOs": false,
+  "announcementsAcked": [
+    "2026-11-08-v2.8.2-picks-star-ask"
+  ],
+  "updateCheckHours": 6,
+  "updateNotifiedFor": "2.8.2",
+  "autoReloadWatch": false,
+  "distribution": "self",
+  "reloadedAt": 0,
+  "reloadCount": 0,
+  "installedVersion": "",
+  "forwardKey": "${DSH_GATEWAY_KEY}"
+}

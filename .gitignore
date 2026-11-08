@@ -1,0 +1,45 @@
+# ── 密钥 / 本地环境 ──────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+secrets.local/
+
+# ── DSH 本地状态 ─────────────────────────────────────────
+dsh-token.txt
+*-token.txt
+dsh-web.log
+dsh-web.err
+dsh.log
+*.bak
+*.bak-*
+deploy-backup-*/
+golden-*/
+
+# ── VPS 本地状态 ─────────────────────────────────────────
+vps/.ssh/
+*.bak-nginx
+nginx/*.local
+
+# ── 日志 / 运行时 ────────────────────────────────────────
+logs/
+*.log
+!docs/**/*.log
+
+# ── 工具产物 ─────────────────────────────────────────────
+__pycache__/
+*.pyc
+.venv/
+venv/
+node_modules/
+*.pid
+shots/
+*.png
+*.jpg
+
+# ── OS ───────────────────────────────────────────────────
+Thumbs.db
+Desktop.ini
+.DS_Store

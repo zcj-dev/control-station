@@ -1,0 +1,324 @@
+[
+  {
+    "name": "dshfwd",
+    "image": "ginuerzh/gost:latest",
+    "restart": "unless-stopped",
+    "network_mode": "host",
+    "privileged": false,
+    "ports": {},
+    "env_keys": [
+      "PATH"
+    ],
+    "mounts": [],
+    "labels": {}
+  },
+  {
+    "name": "proxylite",
+    "image": "proxylite/proxyservice:latest",
+    "restart": "unless-stopped",
+    "network_mode": "default",
+    "privileged": false,
+    "ports": {},
+    "env_keys": [
+      "USER_ID",
+      "PATH"
+    ],
+    "mounts": [],
+    "labels": {
+      "SUPPORT": "https://proxylite.ru"
+    }
+  },
+  {
+    "name": "resihttp",
+    "image": "gogost/gost:latest",
+    "restart": "unless-stopped",
+    "network_mode": "host",
+    "privileged": false,
+    "ports": {},
+    "env_keys": [
+      "PATH"
+    ],
+    "mounts": [],
+    "labels": {}
+  },
+  {
+    "name": "adnade",
+    "image": "jlesage/firefox:latest",
+    "restart": "unless-stopped",
+    "network_mode": "host",
+    "privileged": false,
+    "ports": {},
+    "env_keys": [
+      "TZ",
+      "KEEP_APP_RUNNING",
+      "APP_NICENESS",
+      "FF_OPEN_URL",
+      "VNC_PASSWORD",
+      "WEB_LISTENING_PORT",
+      "PATH",
+      "ENV",
+      "USER_ID",
+      "GROUP_ID",
+      "SUP_GROUP_IDS",
+      "UMASK",
+      "LANG",
+      "INSTALL_PACKAGES",
+      "PACKAGES_MIRROR",
+      "CONTAINER_DEBUG",
+      "DISPLAY_WIDTH",
+      "DISPLAY_HEIGHT",
+      "DARK_MODE",
+      "SECURE_CONNECTION",
+      "SECURE_CONNECTION_VNC_METHOD",
+      "SECURE_CONNECTION_CERTS_CHECK_INTERVAL",
+      "WEB_LOCALHOST_ONLY",
+      "VNC_LOCALHOST_ONLY",
+      "VNC_LISTENING_PORT",
+      "ENABLE_CJK_FONT",
+      "WEB_AUDIO",
+      "WEB_HOST_CLIPBOARD_SYNC",
+      "WEB_AUTHENTICATION",
+      "WEB_AUTHENTICATION_ALLOW_INSECURE",
+      "WEB_AUTHENTICATION_TOKEN_VALIDITY_TIME",
+      "WEB_AUTHENTICATION_USERNAME",
+      "WEB_AUTHENTICATION_PASSWORD",
+      "WEB_FILE_MANAGER",
+      "WEB_FILE_MANAGER_ALLOWED_PATHS",
+      "WEB_FILE_MANAGER_DENIED_PATHS",
+      "WEB_NOTIFICATION",
+      "WEB_TERMINAL",
+      "WEB_TERMINAL_SHELL_PATH",
+      "FF_KIOSK",
+      "FF_CUSTOM_ARGS"
+    ],
+    "mounts": [
+      {
+        "src": "/var/lib/docker/volumes/a43f3e0abd3551b97a2a926c8f7db285312b1e318a63a95a9e362868035f735e/_data",
+        "dst": "/config",
+        "mode": ""
+      }
+    ],
+    "labels": {
+      "org.label-schema.description": "Docker container for Firefox",
+      "org.label-schema.name": "firefox",
+      "org.label-schema.schema-version": "1.0",
+      "org.label-schema.vcs-url": "https://github.com/jlesage/docker-firefox",
+      "org.label-schema.version": "26.09.1"
+    }
+  },
+  {
+    "name": "traffmonetizer",
+    "image": "traffmonetizer/cli_v2:latest",
+    "restart": "unless-stopped",
+    "network_mode": "default",
+    "privileged": false,
+    "ports": {},
+    "env_keys": [
+      "PATH"
+    ],
+    "mounts": [],
+    "labels": {}
+  },
+  {
+    "name": "urmine",
+    "image": "techroy23/docker-urnetwork:latest",
+    "restart": "unless-stopped",
+    "network_mode": "default",
+    "privileged": false,
+    "ports": {},
+    "env_keys": [
+      "ALL_OPERATORS",
+      "AUTO_REGISTER",
+      "ALLOW_CLIENT_REGISTRATION",
+      "VERBOSE",
+      "AUTH",
+      "USER_AUTH",
+      "PASSWORD",
+      "PROVIDER_PORT",
+      "PATH",
+      "HOME"
+    ],
+    "mounts": [
+      {
+        "src": "/var/lib/docker/volumes/ec2b2d49edd3a3b6e8677c4f82d4f86c07b0a09bc8b64cfa0300ba57fe5df29c/_data",
+        "dst": "urnetwork/urnetwork/.urnetwork",
+        "mode": ""
+      },
+      {
+        "src": "/var/lib/docker/volumes/beb3398ac68bf5b29f624162e588201c4af3846b31553a30e026ca2df6932087/_data",
+        "dst": "/home/urnetwork/.urnetwork",
+        "mode": ""
+      }
+    ],
+    "labels": {}
+  },
+  {
+    "name": "repocket",
+    "image": "repocket/repocket:latest",
+    "restart": "unless-stopped",
+    "network_mode": "default",
+    "privileged": false,
+    "ports": {},
+    "env_keys": [
+      "RP_API_KEY",
+      "PATH",
+      "SSL_CERT_FILE",
+      "NODE_ENV"
+    ],
+    "mounts": [],
+    "labels": {}
+  },
+  {
+    "name": "prometheus",
+    "image": "prom/prometheus:v2.53.0",
+    "restart": "unless-stopped",
+    "network_mode": "monitoring",
+    "privileged": false,
+    "ports": {
+      "9090/tcp": [
+        {
+          "HostIp": "",
+          "HostPort": "9090"
+        }
+      ]
+    },
+    "env_keys": [
+      "PATH"
+    ],
+    "mounts": [
+      {
+        "src": "/etc/prometheus/prometheus.yml",
+        "dst": "/etc/prometheus/prometheus.yml",
+        "mode": "ro"
+      },
+      {
+        "src": "/var/lib/docker/volumes/bc7953059f17e8755cdcfff7c645a2099484ea90cd7b57c4d56e0df44248b01b/_data",
+        "dst": "/prometheus",
+        "mode": ""
+      }
+    ],
+    "labels": {
+      "maintainer": "The Prometheus Authors <prometheus-developers@googlegroups.com>"
+    }
+  },
+  {
+    "name": "cadvisor",
+    "image": "gcr.io/cadvisor/cadvisor:v0.49.1",
+    "restart": "unless-stopped",
+    "network_mode": "monitoring",
+    "privileged": false,
+    "ports": {
+      "8080/tcp": [
+        {
+          "HostIp": "",
+          "HostPort": "8080"
+        }
+      ]
+    },
+    "env_keys": [
+      "PATH",
+      "CADVISOR_HEALTHCHECK_URL"
+    ],
+    "mounts": [
+      {
+        "src": "/",
+        "dst": "/rootfs",
+        "mode": "ro"
+      },
+      {
+        "src": "/var/run",
+        "dst": "/var/run",
+        "mode": "ro"
+      },
+      {
+        "src": "/sys",
+        "dst": "/sys",
+        "mode": "ro"
+      },
+      {
+        "src": "/var/lib/docker",
+        "dst": "/var/lib/docker",
+        "mode": "ro"
+      },
+      {
+        "src": "/dev/disk",
+        "dst": "/dev/disk",
+        "mode": "ro"
+      }
+    ],
+    "labels": {}
+  },
+  {
+    "name": "node-exporter",
+    "image": "prom/node-exporter:v1.8.2",
+    "restart": "unless-stopped",
+    "network_mode": "monitoring",
+    "privileged": false,
+    "ports": {
+      "9100/tcp": [
+        {
+          "HostIp": "",
+          "HostPort": "9100"
+        }
+      ]
+    },
+    "env_keys": [
+      "PATH"
+    ],
+    "mounts": [
+      {
+        "src": "/",
+        "dst": "/host",
+        "mode": "ro,rslave"
+      }
+    ],
+    "labels": {
+      "maintainer": "The Prometheus Authors <prometheus-developers@googlegroups.com>"
+    }
+  },
+  {
+    "name": "sing-box",
+    "image": "ghcr.io/sagernet/sing-box:latest",
+    "restart": "always",
+    "network_mode": "sing-box-net",
+    "privileged": false,
+    "ports": {
+      "443/tcp": [
+        {
+          "HostIp": "",
+          "HostPort": "443"
+        }
+      ],
+      "8443/udp": [
+        {
+          "HostIp": "",
+          "HostPort": "8443"
+        }
+      ],
+      "9443/udp": [
+        {
+          "HostIp": "",
+          "HostPort": "9443"
+        }
+      ]
+    },
+    "env_keys": [
+      "PATH"
+    ],
+    "mounts": [
+      {
+        "src": "/etc/sing-box",
+        "dst": "/etc/sing-box",
+        "mode": ""
+      },
+      {
+        "src": "/etc/ssl",
+        "dst": "/etc/ssl",
+        "mode": ""
+      }
+    ],
+    "labels": {
+      "maintainer": "nekohasekai <contact-git@sekai.icu>"
+    }
+  }
+]
